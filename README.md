@@ -87,3 +87,5 @@ node tests/audio-check.cjs
 ## 第三方许可
 
 Three.js 使用 MIT 许可证，见 [vendor/THREE-LICENSE.txt](./vendor/THREE-LICENSE.txt)。
+
+Built with Codex assistance.
