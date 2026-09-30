@@ -1,0 +1,11 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body { background: #2e77d9; color: #fff8d4; font-family: 'Courier New', 'Microsoft YaHei', monospace; user-select: none; }
+#game { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; cursor: grab; touch-action: none; }
+#game:active { cursor: grabbing; }
+.grain { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: .18; background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(9, 34, 66, .14) 3px 4px), repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 5px); mix-blend-mode: multiply; }
+.mobile-controls { position: fixed; z-index: 5; display: none; bottom: 23px; left: 18px; right: 18px; justify-content: space-between; align-items: end; pointer-events: none; }
+.joystick { width: 104px; height: 104px; border: 3px solid #ffe09a; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #7592aaac, #385576ae 72%); pointer-events: auto; touch-action: none; position: relative; box-shadow: inset 3px 3px 0 #fff3c28a, inset -4px -4px 0 #263e639c, 3px 4px 0 #80526e88; }
+.joystick-knob { width: 47px; height: 47px; position: absolute; left: 26px; top: 26px; border: 3px solid #fff0aa; border-radius: 50%; background: radial-gradient(circle at 29% 25%, #fff5bc, #f0cb5c 45%, #ba7b43 90%); box-shadow: inset -3px -3px 0 #955e43, 2px 3px 0 #3a4d68; }
+#jump-button { width: 65px; height: 65px; border: 3px solid #ffe39b; border-radius: 50%; background: radial-gradient(circle at 30% 23%, #ffd4ae, #f8756f 28%, #c64a5a 70%, #8c2c48); box-shadow: inset 2px 2px 0 #fff1bf, inset -4px -4px 0 #852943, 3px 4px 0 #774057; color: #fff7d5; font-size: 29px; font-weight: bold; text-shadow: 1px 2px #9e3b49; pointer-events: auto; touch-action: none; }
+@media (max-width: 700px) { .mobile-controls { display: flex; } }

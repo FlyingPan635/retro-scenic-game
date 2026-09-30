@@ -1,0 +1,4 @@
+# Local runtime and browser artifacts
+__pycache__/
+*.py[cod]
+*.log
