@@ -1,0 +1,91 @@
+name: Deploy game
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      rollback_release:
+        description: '留空发布当前 main；填 previous 或保留的版本目录名执行回滚'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+# Do not interrupt a server mutation. The server also rejects stale run sequences.
+concurrency:
+  group: production-hill
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GAME: hill
+      DEPLOY_USER: deploy-hill
+      ROLLBACK_RELEASE: ${{ inputs.rollback_release }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: env.ROLLBACK_RELEASE == ''
+        with:
+          node-version: '22'
+      - name: Install isolated audio-check browser dependencies
+        if: env.ROLLBACK_RELEASE == ''
+        run: |
+          npm install --prefix "$RUNNER_TEMP/audio-ci" --no-audit --no-fund playwright@1.63.0
+          "$RUNNER_TEMP/audio-ci/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Existing audio regression check
+        if: env.ROLLBACK_RELEASE == ''
+        env:
+          NODE_PATH: ${{ runner.temp }}/audio-ci/node_modules
+        run: node tests/audio-check.cjs
+      - name: Package runtime files
+        if: env.ROLLBACK_RELEASE == ''
+        run: python3 deploy/package-release.py "$GAME" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "$RUNNER_TEMP/release.tar.gz"
+      - name: Save build artifact
+        if: env.ROLLBACK_RELEASE == ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hill-${{ github.sha }}
+          path: ${{ runner.temp }}/release.tar.gz
+          retention-days: 7
+      - name: Verify current main
+        id: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [ "$latest" != "$GITHUB_SHA" ]; then
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+            echo 'Skipped: main has advanced; a newer workflow will deploy.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Deploy or rollback with pinned SSH host key
+        if: steps.head.outputs.current == 'true'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          test -n "$DEPLOY_SSH_KEY" || { echo 'Missing DEPLOY_SSH_KEY secret'; exit 1; }
+          umask 077
+          export DEPLOY_KEY_FILE="$RUNNER_TEMP/deploy_key"
+          export DEPLOY_KNOWN_HOSTS_FILE="$RUNNER_TEMP/known_hosts"
+          trap 'rm -f "$DEPLOY_KEY_FILE" "$DEPLOY_KNOWN_HOSTS_FILE"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$DEPLOY_KEY_FILE"
+          unset DEPLOY_SSH_KEY
+          printf '%s\n' '[179.255.115.184]:2022 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPbYYjEhOfezgdbCEJqMVrsIgL2BIU0od9OcK7hr/Z3s' > "$DEPLOY_KNOWN_HOSTS_FILE"
+          if [ -n "$ROLLBACK_RELEASE" ]; then
+            python3 deploy/ssh-release.py rollback "$ROLLBACK_RELEASE" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT"
+          else
+            python3 deploy/ssh-release.py deploy "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "$RUNNER_TEMP/release.tar.gz"
+          fi
+          echo "### cloud&hill 发布成功" >> "$GITHUB_STEP_SUMMARY"
+          echo "提交：\`$GITHUB_SHA\`；回滚目标：${ROLLBACK_RELEASE:-无}" >> "$GITHUB_STEP_SUMMARY"
+          echo '游戏：https://play.635cloud.fyi/games/hill/' >> "$GITHUB_STEP_SUMMARY"
