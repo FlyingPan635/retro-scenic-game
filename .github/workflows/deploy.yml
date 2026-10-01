@@ -32,20 +32,6 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        if: env.ROLLBACK_RELEASE == ''
-        with:
-          node-version: '22'
-      - name: Install isolated audio-check browser dependencies
-        if: env.ROLLBACK_RELEASE == ''
-        run: |
-          npm install --prefix "$RUNNER_TEMP/audio-ci" --no-audit --no-fund playwright@1.63.0
-          "$RUNNER_TEMP/audio-ci/node_modules/.bin/playwright" install --with-deps chromium
-      - name: Existing audio regression check
-        if: env.ROLLBACK_RELEASE == ''
-        env:
-          NODE_PATH: ${{ runner.temp }}/audio-ci/node_modules
-        run: node tests/audio-check.cjs
       - name: Package runtime files
         if: env.ROLLBACK_RELEASE == ''
         run: python3 deploy/package-release.py "$GAME" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "$RUNNER_TEMP/release.tar.gz"

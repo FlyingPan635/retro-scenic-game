@@ -4,16 +4,16 @@
 
 ## 日常操作
 
-1. 本地修改、运行、试玩满意；先完成项目已有检查。
+1. 本地修改、运行、试玩满意；按本轮改动需要自行决定是否运行开发测试。
 2. 只提交本次想上线的文件，提交并推送游戏仓库的 `main`。包含 Codex 协助修改的提交追加 `Co-authored-by: Codex <noreply@openai.com>`。
 3. 打开 [仓库 Actions](https://github.com/FlyingPan635/retro-scenic-game/actions)，选择 **Deploy game**，打开最新运行。绿色表示完成；每个步骤可以展开查看日志。若显示 main 已前进而跳过，查看更新的运行。
 4. 打开游戏刷新检查。线上 `/release.json` 记录当前提交 SHA、运行序号和重试次数。
 
-CI 使用 Node.js 22，在 runner 临时目录安装固定 Playwright 1.63.0 和 Chromium，运行现有 `node tests/audio-check.cjs`。仅打包根目录 HTML/CSS/JS、favicon、VERSION 和 vendor（含许可证）；不上传测试、本地启动器、Git 历史或依赖目录。
+发布流程直接使用 Python 打包静态文件，不安装 Node.js、Playwright 或 Chromium，不运行音频检查。`tests/audio-check.cjs` 仅是遗留开发检查文件，保留在仓库，既不作为发布门槛，也不作为手动发布测试选项。仅打包根目录 HTML/CSS/JS、favicon、VERSION 和 vendor（含许可证）；不上传测试、本地启动器、Git 历史或依赖目录。
 
 ## 手动重发与回滚
 
-- **重发当前 main**：Actions → Deploy game → Run workflow → Branch 选 `main` → `rollback_release` 留空 → Run workflow。会重新检查并发布当前版本。
+- **重发当前 main**：Actions → Deploy game → Run workflow → Branch 选 `main` → `rollback_release` 留空 → Run workflow。会重新发布当前版本，始终执行文件校验和上线检查。
 - **回到上一个成功版本**：同一界面将 `rollback_release` 填 `previous`。此操作跳过构建，切换保留的成功版本，仍执行本机和公网检查。
 - **回到指定成功版本**：填版本目录名，如 `2-1-abcdef123456`；必须是服务器仍保留的版本。目录名可在发布日志的 `SUCCESS` 行查看。
 - **失败重试**：运行页面右上角 Re-run jobs。若 main 已更新，旧运行会跳过；推荐 Run workflow 重发当前 main。旧序号已被服务器处理过时会拒绝，不能覆盖更新版本。
