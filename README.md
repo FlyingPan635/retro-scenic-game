@@ -72,18 +72,6 @@ Three.js 随项目附带，配乐和音效由浏览器实时合成，游玩无�
 - `birds` / `sleepers`：飞鸟与打盹动物，动物支持 `mouse` 和 `cat`。
 - `spawn`：出生位置、角色朝向与初始镜头方向 `cameraYaw`。
 
-## 验证
-
-音频回归检查需要 Node.js、Playwright 和 Chromium 浏览器。这些仅用于开发验证，不是游玩依赖。
-
-```powershell
-node tests/audio-check.cjs
-```
-
-若 Playwright 在独立依赖目录，设置 `NODE_PATH` 指向其 `node_modules`；若使用已安装的 Chrome，设置 `CHROME_PATH` 为浏览器可执行文件路径。未设置时使用 Playwright 自带的 Chromium。
-
-检查覆盖步行入水、跳入水面、再次入水、溪流听觉范围与循环接缝、景物音乐响度和淡入淡出、多声音叠加峰值，以及花丛和睡觉动物保持静音。
-
 ## 第三方许可
 
 Three.js 使用 MIT 许可证，见 [vendor/THREE-LICENSE.txt](./vendor/THREE-LICENSE.txt)。
